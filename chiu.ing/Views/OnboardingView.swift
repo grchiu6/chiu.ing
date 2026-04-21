@@ -17,10 +17,11 @@ struct OnboardingView: View {
     private let cityOptions = ["Atlanta", "New York", "Los Angeles", "Chicago", "Austin", "Seattle", "Miami", "Denver"]
 
     var body: some View {
-        ZStack {
-            Theme.Palette.gradientPlayful.ignoresSafeArea()
-            VStack(spacing: 20) {
-                progressDots
+        ZStack(alignment: .top) {
+            Theme.Palette.surface.ignoresSafeArea()
+
+            VStack(spacing: Theme.Space.xl) {
+                progressBar
                 TabView(selection: $stepIndex) {
                     welcomeStep.tag(0)
                     usernameStep.tag(1)
@@ -30,99 +31,136 @@ struct OnboardingView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 bottomBar
             }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 30)
+            .padding(.horizontal, Theme.Space.gutter)
+            .padding(.top, Theme.Space.xl)
+            .padding(.bottom, Theme.Space.xl)
         }
     }
 
-    private var progressDots: some View {
-        HStack(spacing: 8) {
+    private var progressBar: some View {
+        HStack(spacing: Theme.Space.xs) {
             ForEach(0..<4) { i in
-                Capsule()
-                    .fill(Color.white.opacity(i == stepIndex ? 1 : 0.35))
-                    .frame(width: i == stepIndex ? 28 : 10, height: 6)
-                    .animation(.spring(response: 0.4), value: stepIndex)
+                Rectangle()
+                    .fill(i <= stepIndex ? Theme.Palette.ink : Theme.Palette.border)
+                    .frame(height: 2)
+                    .animation(.easeOut(duration: 0.2), value: stepIndex)
             }
         }
-        .padding(.top, 18)
     }
 
+    // MARK: - Steps
+
     private var welcomeStep: some View {
-        VStack(spacing: 18) {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
             Spacer()
-            Text("🍜").font(.system(size: 90))
+            Text("Introductions")
+                .eyebrowStyle()
             Text("chiu·ing")
-                .font(.system(size: 58, weight: .black, design: .rounded))
-                .foregroundColor(.white)
-            Text("Find food the way your friends find food.")
-                .font(Theme.Typography.title)
-                .foregroundColor(.white.opacity(0.92))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 14)
+                .font(.system(size: 48, weight: .semibold, design: .serif))
+                .foregroundColor(Theme.Palette.ink)
+            Text("A restaurant network built around the people you actually trust with a dinner recommendation.")
+                .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.inkSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
             Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var usernameStep: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
             Spacer()
-            Text("Pick a handle").font(Theme.Typography.display).foregroundColor(.white)
-            Text("This is how friends will find you.")
-                .font(Theme.Typography.body).foregroundColor(.white.opacity(0.85))
-            HStack {
+            Text("Step one").eyebrowStyle()
+            Text("Pick a handle")
+                .font(Theme.Typography.display)
+                .foregroundColor(Theme.Palette.ink)
+            Text("This is how friends will find you across the app.")
+                .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.inkSecondary)
+
+            HStack(spacing: 2) {
                 Text("@")
-                    .font(Theme.Typography.title)
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.4))
-                TextField("foodie", text: $username)
-                    .font(Theme.Typography.title)
+                    .font(.system(size: 22, weight: .regular, design: .serif))
+                    .foregroundColor(Theme.Palette.inkTertiary)
+                TextField("yourhandle", text: $username)
+                    .font(.system(size: 22, weight: .regular, design: .serif))
+                    .foregroundColor(Theme.Palette.ink)
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
             }
-            .padding(16)
-            .background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            Spacer(); Spacer()
+            .padding(.horizontal, Theme.Space.m)
+            .padding(.vertical, Theme.Space.m)
+            .background(Theme.Palette.surfaceElevated)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                    .stroke(Theme.Palette.border, lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
+            Spacer()
+            Spacer()
         }
     }
 
     private var cityStep: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
             Spacer()
-            Text("Where do you eat?").font(Theme.Typography.display).foregroundColor(.white)
-            Text("We'll show places near you.")
-                .font(Theme.Typography.body).foregroundColor(.white.opacity(0.85))
-            ScrollView {
+            Text("Step two").eyebrowStyle()
+            Text("Where do you eat?")
+                .font(Theme.Typography.display)
+                .foregroundColor(Theme.Palette.ink)
+            Text("We'll seed your feed with spots near you.")
+                .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.inkSecondary)
+
+            ScrollView(showsIndicators: false) {
                 LazyVGrid(
-                    columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
-                    spacing: 10
+                    columns: [
+                        GridItem(.flexible(), spacing: Theme.Space.xs),
+                        GridItem(.flexible(), spacing: Theme.Space.xs)
+                    ],
+                    spacing: Theme.Space.xs
                 ) {
                     ForEach(cityOptions, id: \.self) { c in
                         Button { city = c } label: {
                             Text(c)
                                 .font(Theme.Typography.headline)
-                                .padding(.vertical, 18)
+                                .padding(.vertical, Theme.Space.m)
                                 .frame(maxWidth: .infinity)
-                                .background(c == city ? Color.white : Color.white.opacity(0.25))
-                                .foregroundColor(c == city ? Theme.Palette.sunsetOrange : .white)
-                                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                .foregroundColor(c == city ? .white : Theme.Palette.ink)
+                                .background(c == city ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                                        .stroke(
+                                            c == city ? Theme.Palette.ink : Theme.Palette.border,
+                                            lineWidth: 1
+                                        )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
                         }
                     }
                 }
+                .padding(.top, Theme.Space.xs)
             }
             Spacer()
         }
     }
 
     private var tasteStep: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: Theme.Space.m) {
             Spacer(minLength: 0)
-            Text("Pick your cravings").font(Theme.Typography.display).foregroundColor(.white)
-            Text("We'll tune your feed. Pick 3 or more.")
-                .font(Theme.Typography.body).foregroundColor(.white.opacity(0.85))
+            Text("Step three").eyebrowStyle()
+            Text("What do you crave?")
+                .font(Theme.Typography.display)
+                .foregroundColor(Theme.Palette.ink)
+            Text("Pick three or more. We use these to tune what shows up.")
+                .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.inkSecondary)
+
             ScrollView(showsIndicators: false) {
                 LazyVGrid(
-                    columns: [GridItem(.adaptive(minimum: 96), spacing: 8)],
-                    alignment: .leading, spacing: 8
+                    columns: [GridItem(.adaptive(minimum: 100), spacing: Theme.Space.xs)],
+                    alignment: .leading, spacing: Theme.Space.xs
                 ) {
                     ForEach(tasteOptions, id: \.self) { t in
                         Button {
@@ -130,49 +168,53 @@ struct OnboardingView: View {
                             else { selectedTastes.insert(t) }
                         } label: {
                             Text(t)
-                                .font(Theme.Typography.caption)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(selectedTastes.contains(t) ? Color.white : Color.white.opacity(0.25))
-                                .foregroundColor(selectedTastes.contains(t) ? Theme.Palette.sunsetOrange : .white)
+                                .font(Theme.Typography.label)
+                                .padding(.horizontal, Theme.Space.m)
+                                .padding(.vertical, Theme.Space.s)
+                                .foregroundColor(selectedTastes.contains(t) ? .white : Theme.Palette.ink)
+                                .background(selectedTastes.contains(t) ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+                                .overlay(
+                                    Capsule()
+                                        .stroke(
+                                            selectedTastes.contains(t) ? Theme.Palette.ink : Theme.Palette.border,
+                                            lineWidth: 1
+                                        )
+                                )
                                 .clipShape(Capsule())
                         }
                     }
                 }
+                .padding(.top, Theme.Space.xs)
             }
             Spacer(minLength: 0)
         }
     }
 
+    // MARK: - Bottom bar
+
     private var bottomBar: some View {
-        HStack {
+        HStack(spacing: Theme.Space.s) {
             if stepIndex > 0 {
                 Button("Back") {
-                    withAnimation { stepIndex -= 1 }
+                    withAnimation(.easeInOut(duration: 0.2)) { stepIndex -= 1 }
                 }
-                .font(Theme.Typography.headline)
-                .foregroundColor(.white.opacity(0.85))
+                .buttonStyle(SecondaryButtonStyle())
+                .frame(maxWidth: 120)
             }
-            Spacer()
             Button {
                 if stepIndex < 3 {
-                    withAnimation { stepIndex += 1 }
+                    withAnimation(.easeInOut(duration: 0.2)) { stepIndex += 1 }
                 } else {
                     finish()
                 }
             } label: {
                 HStack(spacing: 6) {
-                    Text(stepIndex == 3 ? "Let's go" : "Next")
+                    Text(stepIndex == 3 ? "Get started" : "Continue")
                     Image(systemName: "arrow.right")
+                        .font(.system(size: 12, weight: .semibold))
                 }
-                .font(Theme.Typography.headline)
-                .foregroundColor(Theme.Palette.sunsetOrange)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 14)
-                .background(Color.white)
-                .clipShape(Capsule())
-                .opacity(canAdvance ? 1 : 0.5)
             }
+            .buttonStyle(PrimaryButtonStyle(isEnabled: canAdvance))
             .disabled(!canAdvance)
         }
     }

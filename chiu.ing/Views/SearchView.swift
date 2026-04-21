@@ -15,7 +15,7 @@ struct SearchView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
+            VStack(alignment: .leading, spacing: Theme.Space.xl) {
                 searchField
                 scopePicker
                 if query.isEmpty {
@@ -25,54 +25,67 @@ struct SearchView: View {
                 }
                 Color.clear.frame(height: 110)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
+            .padding(.horizontal, Theme.Space.gutter)
+            .padding(.top, Theme.Space.l)
         }
-        .background(Theme.Palette.cream.ignoresSafeArea())
-        .sheet(item: $presentedRestaurant) { RestaurantDetailView(restaurant: $0).environmentObject(session) }
-        .sheet(item: $presentedUser) { ProfileView(user: $0).environmentObject(session) }
+        .background(Theme.Palette.surface.ignoresSafeArea())
+        .sheet(item: $presentedRestaurant) {
+            RestaurantDetailView(restaurant: $0).environmentObject(session)
+        }
+        .sheet(item: $presentedUser) {
+            ProfileView(user: $0).environmentObject(session)
+        }
         .fullScreenCover(item: $openingTag) { tag in
             TagFeedContainer(tag: tag.value).environmentObject(session)
         }
     }
 
     private var searchField: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: Theme.Space.s) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.5))
-            TextField("Search users, places, tags", text: $query)
+                .font(.system(size: 14))
+                .foregroundColor(Theme.Palette.inkTertiary)
+            TextField("Search people, places, tags", text: $query)
                 .font(Theme.Typography.body)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
             if !query.isEmpty {
                 Button { query = "" } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Theme.Palette.charcoal.opacity(0.3))
+                        .foregroundColor(Theme.Palette.inkTertiary)
                 }
             }
         }
-        .padding(14)
-        .chiuCard()
-        .padding(.top, 4)
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.vertical, 12)
+        .background(Theme.Palette.surfaceElevated)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                .stroke(Theme.Palette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
     }
 
     private var scopePicker: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Space.xs) {
                 ForEach(Scope.allCases) { s in
                     Button {
-                        withAnimation(.spring(response: 0.3)) { scope = s }
+                        withAnimation(.easeInOut(duration: 0.18)) { scope = s }
                     } label: {
                         Text(s.rawValue)
-                            .font(Theme.Typography.caption)
-                            .padding(.horizontal, 14)
+                            .font(Theme.Typography.label)
+                            .padding(.horizontal, Theme.Space.m)
                             .padding(.vertical, 8)
-                            .background(
-                                scope == s
-                                ? AnyView(Theme.Palette.gradientWarm)
-                                : AnyView(Color.white)
+                            .foregroundColor(scope == s ? .white : Theme.Palette.ink)
+                            .background(scope == s ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+                            .overlay(
+                                Capsule()
+                                    .stroke(
+                                        scope == s ? Theme.Palette.ink : Theme.Palette.border,
+                                        lineWidth: 1
+                                    )
                             )
-                            .foregroundColor(scope == s ? .white : Theme.Palette.charcoal)
                             .clipShape(Capsule())
                     }
                 }
@@ -82,13 +95,13 @@ struct SearchView: View {
 
     @ViewBuilder
     private var discoverContent: some View {
-        sectionHeader("Trending tags", emoji: "🔥")
+        sectionHeader(eyebrow: "Explore", title: "Trending tags")
         FlowTagStrip(tags: MockData.trendingTags) { tag in
             openingTag = IdentifiedTag(value: tag)
         }
 
-        sectionHeader("Top foodies in your city", emoji: "⭐️")
-        VStack(spacing: 10) {
+        sectionHeader(eyebrow: "People", title: "Top foodies in your city")
+        VStack(spacing: Theme.Space.s) {
             ForEach(topFoodies) { u in
                 Button { presentedUser = u } label: {
                     SuggestedUserRow(user: u)
@@ -97,9 +110,9 @@ struct SearchView: View {
             }
         }
 
-        sectionHeader("Hot spots in \(session.locationFilter.city)", emoji: "📍")
+        sectionHeader(eyebrow: "Places", title: "Hot spots in \(session.locationFilter.city)")
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: Theme.Space.s) {
                 ForEach(MockData.restaurants(in: session.locationFilter.city)
                             .sorted { $0.rating > $1.rating }.prefix(6)) { r in
                     Button { presentedRestaurant = r } label: {
@@ -108,7 +121,9 @@ struct SearchView: View {
                     .buttonStyle(.plain)
                 }
             }
+            .padding(.horizontal, Theme.Space.gutter)
         }
+        .padding(.horizontal, -Theme.Space.gutter)
     }
 
     @ViewBuilder
@@ -129,8 +144,8 @@ struct SearchView: View {
             .sorted()
 
         if (scope == .all || scope == .users), !matchedUsers.isEmpty {
-            sectionHeader("People", emoji: "🧑")
-            VStack(spacing: 10) {
+            sectionHeader(eyebrow: "People", title: "Matching \"\(query)\"")
+            VStack(spacing: Theme.Space.s) {
                 ForEach(matchedUsers) { u in
                     Button { presentedUser = u } label: { SuggestedUserRow(user: u) }
                         .buttonStyle(.plain)
@@ -139,8 +154,8 @@ struct SearchView: View {
         }
 
         if (scope == .all || scope == .places), !matchedPlaces.isEmpty {
-            sectionHeader("Places", emoji: "🍽️")
-            VStack(spacing: 10) {
+            sectionHeader(eyebrow: "Places", title: "Matching \"\(query)\"")
+            VStack(spacing: Theme.Space.s) {
                 ForEach(matchedPlaces) { r in
                     Button { presentedRestaurant = r } label: { PlaceRow(restaurant: r) }
                         .buttonStyle(.plain)
@@ -149,31 +164,38 @@ struct SearchView: View {
         }
 
         if (scope == .all || scope == .tags), !matchedTags.isEmpty {
-            sectionHeader("Tags", emoji: "🏷️")
+            sectionHeader(eyebrow: "Tags", title: "Matching \"\(query)\"")
             FlowTagStrip(tags: matchedTags) { tag in
                 openingTag = IdentifiedTag(value: tag)
             }
         }
 
         if matchedUsers.isEmpty && matchedPlaces.isEmpty && matchedTags.isEmpty {
-            VStack(spacing: 10) {
-                Text("🍽️")
-                    .font(.system(size: 54))
-                Text("No matches for “\(query)”")
+            VStack(spacing: Theme.Space.s) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundColor(Theme.Palette.inkTertiary)
+                    .padding(.bottom, Theme.Space.xs)
+                Text("No matches for \"\(query)\"")
+                    .font(Theme.Typography.headline)
+                    .foregroundColor(Theme.Palette.ink)
+                Text("Try a different handle, city, or tag.")
                     .font(Theme.Typography.body)
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                    .foregroundColor(Theme.Palette.inkSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 40)
+            .padding(.vertical, Theme.Space.xxxl)
         }
     }
 
-    private func sectionHeader(_ title: String, emoji: String) -> some View {
-        HStack {
-            Text("\(emoji) \(title)")
-                .font(Theme.Typography.headline)
-            Spacer()
+    private func sectionHeader(eyebrow: String, title: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Space.xxs) {
+            Text(eyebrow).eyebrowStyle()
+            Text(title)
+                .font(Theme.Typography.titleSmall)
+                .foregroundColor(Theme.Palette.ink)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var topFoodies: [User] {
@@ -190,8 +212,8 @@ struct FlowTagStrip: View {
     let onTap: (String) -> Void
 
     var body: some View {
-        let columns = [GridItem(.adaptive(minimum: 90), spacing: 8)]
-        LazyVGrid(columns: columns, alignment: .leading, spacing: 8) {
+        let columns = [GridItem(.adaptive(minimum: 90), spacing: Theme.Space.xs)]
+        LazyVGrid(columns: columns, alignment: .leading, spacing: Theme.Space.xs) {
             ForEach(tags, id: \.self) { t in
                 Button { onTap(t) } label: {
                     TagPill(text: t)
@@ -205,61 +227,75 @@ struct FlowTagStrip: View {
 struct PlaceMiniCard: View {
     let restaurant: Restaurant
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
             ZStack {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Theme.Palette.gradientFresh)
-                    .frame(width: 160, height: 110)
-                Text(restaurant.heroEmoji).font(.system(size: 64))
+                RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                    .fill(Theme.Palette.surfaceSunk)
+                    .frame(width: 172, height: 120)
+                Text(restaurant.heroEmoji).font(.system(size: 56))
             }
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                    .stroke(Theme.Palette.border, lineWidth: 1)
+            )
             VStack(alignment: .leading, spacing: 2) {
                 Text(restaurant.name)
                     .font(Theme.Typography.headline)
+                    .foregroundColor(Theme.Palette.ink)
                     .lineLimit(1)
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
-                        .foregroundColor(Theme.Palette.mangoYellow)
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Palette.gold)
                     Text(String(format: "%.1f", restaurant.rating))
-                    Text("• \(restaurant.neighborhood)")
-                        .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                        .foregroundColor(Theme.Palette.ink)
+                    Text("· \(restaurant.neighborhood)")
+                        .foregroundColor(Theme.Palette.inkSecondary)
                         .lineLimit(1)
                 }
                 .font(Theme.Typography.caption)
             }
-            .padding(.horizontal, 4)
         }
-        .frame(width: 160)
+        .frame(width: 172, alignment: .leading)
     }
 }
 
 struct PlaceRow: View {
     let restaurant: Restaurant
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: Theme.Space.s) {
             ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Theme.Palette.gradientWarm)
-                    .frame(width: 56, height: 56)
-                Text(restaurant.heroEmoji).font(.system(size: 28))
+                RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                    .fill(Theme.Palette.surfaceSunk)
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                            .stroke(Theme.Palette.border, lineWidth: 1)
+                    )
+                Text(restaurant.heroEmoji).font(.system(size: 26))
             }
             VStack(alignment: .leading, spacing: 3) {
-                Text(restaurant.name).font(Theme.Typography.headline)
-                Text("\(restaurant.cuisine) • \(restaurant.neighborhood) • \(restaurant.priceLabel)")
+                Text(restaurant.name)
+                    .font(Theme.Typography.headline)
+                    .foregroundColor(Theme.Palette.ink)
+                Text("\(restaurant.cuisine) · \(restaurant.neighborhood) · \(restaurant.priceLabel)")
                     .font(Theme.Typography.caption)
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                    .foregroundColor(Theme.Palette.inkSecondary)
                 HStack(spacing: 4) {
                     Image(systemName: "star.fill")
-                        .foregroundColor(Theme.Palette.mangoYellow)
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Palette.gold)
                     Text(String(format: "%.1f", restaurant.rating))
-                        .fontWeight(.bold)
+                        .foregroundColor(Theme.Palette.ink)
                 }
                 .font(Theme.Typography.caption)
             }
             Spacer()
             Image(systemName: "chevron.right")
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.3))
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Theme.Palette.inkTertiary)
         }
-        .padding(12)
+        .padding(Theme.Space.m)
         .chiuCard()
     }
 }

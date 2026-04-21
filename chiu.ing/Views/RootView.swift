@@ -5,17 +5,17 @@ enum AppTab: Hashable {
 }
 
 struct RootView: View {
-    @State private var selection: AppTab = .scroll
+    @State private var selection: AppTab = .home
     @State private var showingCreate = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
             Group {
                 switch selection {
-                case .home: HomeView()
-                case .scroll: ScrollFeedView()
-                case .post: ScrollFeedView()
-                case .search: SearchView()
+                case .home:    HomeView()
+                case .scroll:  ScrollFeedView()
+                case .post:    ScrollFeedView()
+                case .search:  SearchView()
                 case .profile: ProfileView()
                 }
             }
@@ -35,53 +35,60 @@ struct ChiuTabBar: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
-            tabButton(.home, systemImage: "house.fill", label: "Home")
-            tabButton(.search, systemImage: "magnifyingglass", label: "Search")
-
-            Button(action: onCreate) {
-                ZStack {
-                    Circle()
-                        .fill(Theme.Palette.gradientWarm)
-                        .frame(width: 54, height: 54)
-                        .shadow(color: Theme.Palette.sunsetOrange.opacity(0.35),
-                                radius: 10, x: 0, y: 4)
-                    Image(systemName: "plus")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity)
-            }
-            .accessibilityLabel("Create post")
-
-            tabButton(.scroll, systemImage: "play.rectangle.fill", label: "Scroll")
-            tabButton(.profile, systemImage: "person.crop.circle.fill", label: "You")
+            tabButton(.home,    inactive: "house",          active: "house.fill",          label: "Home")
+            tabButton(.search,  inactive: "magnifyingglass", active: "magnifyingglass",    label: "Search")
+            createButton
+            tabButton(.scroll,  inactive: "play.rectangle", active: "play.rectangle.fill", label: "Feed")
+            tabButton(.profile, inactive: "person",         active: "person.fill",         label: "You")
         }
-        .padding(.horizontal, 14)
-        .padding(.top, 10)
-        .padding(.bottom, 18)
+        .padding(.horizontal, Theme.Space.s)
+        .padding(.top, Theme.Space.s)
+        .padding(.bottom, Theme.Space.l)
         .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.08), radius: 18, x: 0, y: -4)
+            Rectangle()
+                .fill(Theme.Palette.surfaceElevated)
+                .overlay(
+                    Rectangle()
+                        .fill(Theme.Palette.border)
+                        .frame(height: 1),
+                    alignment: .top
+                )
+                .ignoresSafeArea(edges: .bottom)
         )
-        .padding(.horizontal, 12)
-        .padding(.bottom, 4)
+    }
+
+    private var createButton: some View {
+        Button(action: {
+            Haptics.soft()
+            onCreate()
+        }) {
+            ZStack {
+                RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                    .fill(Theme.Palette.ink)
+                    .frame(width: 48, height: 36)
+                Image(systemName: "plus")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .accessibilityLabel("New post")
     }
 
     @ViewBuilder
-    private func tabButton(_ tab: AppTab, systemImage: String, label: String) -> some View {
+    private func tabButton(_ tab: AppTab, inactive: String, active: String, label: String) -> some View {
+        let isActive = selection == tab
         Button {
             selection = tab
         } label: {
-            VStack(spacing: 3) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 20, weight: .semibold))
+            VStack(spacing: 4) {
+                Image(systemName: isActive ? active : inactive)
+                    .font(.system(size: 18, weight: isActive ? .medium : .regular))
                 Text(label)
-                    .font(Theme.Typography.tag)
+                    .font(Theme.Typography.micro)
             }
-            .foregroundColor(selection == tab ? Theme.Palette.sunsetOrange : Theme.Palette.charcoal.opacity(0.55))
+            .foregroundColor(isActive ? Theme.Palette.ink : Theme.Palette.inkTertiary)
             .frame(maxWidth: .infinity)
         }
     }
 }
-

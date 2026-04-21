@@ -8,25 +8,18 @@ struct AvatarView: View {
     var body: some View {
         ZStack {
             Circle()
-                .fill(ringGradient)
-                .frame(width: size + (showsRing ? 6 : 0), height: size + (showsRing ? 6 : 0))
-                .opacity(showsRing ? 1 : 0)
-
-            Circle()
-                .fill(Color.white)
+                .fill(Theme.Palette.surfaceElevated)
                 .frame(width: size, height: size)
+                .overlay(
+                    Circle()
+                        .stroke(
+                            showsRing ? Theme.Palette.ink : Theme.Palette.border,
+                            lineWidth: showsRing ? 1.5 : 1
+                        )
+                )
 
             Text(user.avatarEmoji)
-                .font(.system(size: size * 0.55))
-        }
-    }
-
-    private var ringGradient: LinearGradient {
-        let hash = abs(user.username.hashValue)
-        switch hash % 3 {
-        case 0: return Theme.Palette.gradientWarm
-        case 1: return Theme.Palette.gradientFresh
-        default: return Theme.Palette.gradientPlayful
+                .font(.system(size: size * 0.52))
         }
     }
 }

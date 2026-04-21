@@ -8,7 +8,7 @@ struct ScrollFeedView: View {
     var startPostID: UUID? = nil
     var isPresentedAsSheet: Bool = false
     var postsOverride: [Post]? = nil
-    var title: String = "Scroll"
+    var title: String = "Feed"
 
     @State private var showingLocationSheet = false
     @State private var showingRestaurant: Restaurant?
@@ -49,7 +49,7 @@ struct ScrollFeedView: View {
 
                 if posts.isEmpty {
                     EmptyFollowingFeed(onSwitch: {
-                        withAnimation(.spring(response: 0.3)) { feedFilter = .discover }
+                        withAnimation(.easeInOut(duration: 0.2)) { feedFilter = .discover }
                     })
                 } else {
                     ScrollView(.vertical, showsIndicators: false) {
@@ -76,7 +76,7 @@ struct ScrollFeedView: View {
                     .ignoresSafeArea()
                 }
 
-                VStack {
+                VStack(spacing: Theme.Space.s) {
                     topOverlay
                     if showsFilter { feedFilterBar }
                     Spacer()
@@ -91,37 +91,34 @@ struct ScrollFeedView: View {
         .sheet(isPresented: $showingLocationSheet) {
             LocationFilterView().environmentObject(session)
         }
-        .sheet(item: $showingRestaurant) { restaurant in
-            RestaurantDetailView(restaurant: restaurant)
-                .environmentObject(session)
+        .sheet(item: $showingRestaurant) {
+            RestaurantDetailView(restaurant: $0).environmentObject(session)
         }
-        .sheet(item: $showingCreator) { user in
-            ProfileView(user: user).environmentObject(session)
+        .sheet(item: $showingCreator) {
+            ProfileView(user: $0).environmentObject(session)
         }
     }
 
     private var feedFilterBar: some View {
-        HStack(spacing: 14) {
+        HStack(spacing: Theme.Space.xl) {
             ForEach(FeedFilter.allCases) { f in
                 Button {
-                    withAnimation(.spring(response: 0.3)) { feedFilter = f }
+                    withAnimation(.easeInOut(duration: 0.2)) { feedFilter = f }
                     Haptics.soft()
                 } label: {
-                    VStack(spacing: 4) {
+                    VStack(spacing: 6) {
                         Text(f.rawValue)
-                            .font(Theme.Typography.caption)
-                            .fontWeight(feedFilter == f ? .bold : .regular)
+                            .font(Theme.Typography.label)
                             .foregroundColor(.white)
-                            .opacity(feedFilter == f ? 1 : 0.6)
-                        Capsule()
+                            .opacity(feedFilter == f ? 1 : 0.55)
+                        Rectangle()
                             .fill(Color.white)
-                            .frame(width: 22, height: 3)
+                            .frame(width: 20, height: 2)
                             .opacity(feedFilter == f ? 1 : 0)
                     }
                 }
             }
         }
-        .padding(.top, 10)
     }
 
     private var topOverlay: some View {
@@ -129,10 +126,11 @@ struct ScrollFeedView: View {
             if isPresentedAsSheet {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.down")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(10)
+                        .frame(width: 36, height: 36)
                         .background(.black.opacity(0.35))
+                        .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
                         .clipShape(Circle())
                 }
             } else {
@@ -141,13 +139,15 @@ struct ScrollFeedView: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: 12))
                         Text(session.locationFilter.displayText)
+                            .font(Theme.Typography.label)
                     }
-                    .font(Theme.Typography.caption)
                     .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Theme.Space.s)
+                    .padding(.vertical, Theme.Space.xs)
                     .background(.black.opacity(0.35))
+                    .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
                     .clipShape(Capsule())
                 }
             }
@@ -155,11 +155,11 @@ struct ScrollFeedView: View {
             Text(title)
                 .font(Theme.Typography.headline)
                 .foregroundColor(.white)
-                .opacity(0.85)
+                .opacity(0.9)
             Spacer()
-            Color.clear.frame(width: isPresentedAsSheet ? 40 : 110, height: 30)
+            Color.clear.frame(width: isPresentedAsSheet ? 36 : 110, height: 30)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, Theme.Space.m)
         .padding(.top, 52)
     }
 }
@@ -180,7 +180,6 @@ struct ScrollPostCard: View {
     struct HeartBurst: Identifiable, Equatable {
         let id = UUID()
         let position: CGPoint
-        let rotation: Double
     }
 
     var body: some View {
@@ -193,11 +192,12 @@ struct ScrollPostCard: View {
                         burst(at: location)
                         if !session.likedPostIDs.contains(post.id) {
                             session.toggleLike(post)
+                            Haptics.soft()
                         }
                     }
 
                 LinearGradient(
-                    colors: [.clear, .clear, .black.opacity(0.55)],
+                    colors: [.clear, .clear, .black.opacity(0.6)],
                     startPoint: .top, endPoint: .bottom
                 )
                 .ignoresSafeArea()
@@ -215,12 +215,12 @@ struct ScrollPostCard: View {
                     Spacer()
                     rightActionRail
                 }
-                .padding(.horizontal, 18)
-                .padding(.bottom, 130)
+                .padding(.horizontal, Theme.Space.m)
+                .padding(.bottom, 128)
 
                 swipeHintsOverlay
             }
-            .offset(x: dragOffset.width * 0.35)
+            .offset(x: dragOffset.width * 0.3)
             .gesture(
                 DragGesture(minimumDistance: 40)
                     .onChanged { value in
@@ -234,7 +234,7 @@ struct ScrollPostCard: View {
                         } else if value.translation.width > 80 {
                             onTapCreator()
                         }
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) {
+                        withAnimation(.easeOut(duration: 0.22)) {
                             dragOffset = .zero
                         }
                     }
@@ -249,112 +249,117 @@ struct ScrollPostCard: View {
     }
 
     private func burst(at point: CGPoint) {
-        let rotation = Double.random(in: -25...25)
-        heartBursts.append(HeartBurst(position: point, rotation: rotation))
+        heartBursts.append(HeartBurst(position: point))
     }
 
     private var bottomLeftInfo: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
             Button(action: onTapCreator) {
-                HStack(spacing: 10) {
-                    AvatarView(user: author, size: 36, showsRing: true)
+                HStack(spacing: Theme.Space.s) {
+                    AvatarView(user: author, size: 32, showsRing: false)
                     VStack(alignment: .leading, spacing: 0) {
                         Text("@\(author.username)")
                             .font(Theme.Typography.headline)
                             .foregroundColor(.white)
                         Text(author.displayName)
                             .font(Theme.Typography.caption)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundColor(.white.opacity(0.75))
                     }
                 }
             }
             Button(action: onTapRestaurant) {
                 HStack(spacing: 6) {
-                    Image(systemName: "mappin.circle.fill")
+                    Image(systemName: "mappin.circle")
+                        .font(.system(size: 12))
                     Text(place.name)
-                        .fontWeight(.bold)
-                    Text("•")
+                        .fontWeight(.medium)
+                    Text("·")
+                        .foregroundColor(.white.opacity(0.6))
                     Text(place.neighborhood)
+                        .foregroundColor(.white.opacity(0.75))
                 }
-                .font(Theme.Typography.caption)
+                .font(Theme.Typography.label)
                 .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Theme.Space.s)
+                .padding(.vertical, 6)
                 .background(.black.opacity(0.35))
+                .overlay(Capsule().stroke(Color.white.opacity(0.22), lineWidth: 1))
                 .clipShape(Capsule())
             }
             Text(post.caption)
                 .font(Theme.Typography.body)
                 .foregroundColor(.white)
                 .lineLimit(3)
-                .frame(maxWidth: 260, alignment: .leading)
+                .frame(maxWidth: 280, alignment: .leading)
 
-            HStack(spacing: 6) {
-                ForEach(post.tags, id: \.self) { t in
-                    TagPill(text: t, style: .dark, onTap: { openingTag = IdentifiedTag(value: t) })
+            if !post.tags.isEmpty {
+                HStack(spacing: 6) {
+                    ForEach(post.tags.prefix(3), id: \.self) { t in
+                        TagPill(text: t, style: .dark, onTap: { openingTag = IdentifiedTag(value: t) })
+                    }
                 }
             }
         }
     }
 
     private var rightActionRail: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: Theme.Space.l) {
             actionButton(
                 icon: session.likedPostIDs.contains(post.id) ? "heart.fill" : "heart",
                 value: post.likeCount + (session.likedPostIDs.contains(post.id) ? 1 : 0),
-                tint: session.likedPostIDs.contains(post.id) ? Theme.Palette.bubblegumPink : .white,
+                highlighted: session.likedPostIDs.contains(post.id),
                 action: { session.toggleLike(post) }
             )
             actionButton(
                 icon: session.savedPostIDs.contains(post.id) ? "bookmark.fill" : "bookmark",
                 value: post.saveCount + (session.savedPostIDs.contains(post.id) ? 1 : 0),
-                tint: session.savedPostIDs.contains(post.id) ? Theme.Palette.mangoYellow : .white,
+                highlighted: session.savedPostIDs.contains(post.id),
                 action: { session.toggleSave(post) }
             )
             shareButton
-            actionButton(icon: "ellipsis", value: nil, tint: .white, action: {})
+            actionButton(icon: "ellipsis", value: nil, highlighted: false, action: {})
         }
     }
 
     private var shareButton: some View {
         ShareLink(item: shareText) {
             VStack(spacing: 4) {
-                ZStack {
-                    Circle()
-                        .fill(.black.opacity(0.3))
-                        .frame(width: 48, height: 48)
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                iconCircle("paperplane", highlighted: false)
                 Text(format(post.shareCount))
-                    .font(Theme.Typography.caption)
+                    .font(Theme.Typography.micro)
                     .foregroundColor(.white)
             }
         }
     }
 
     private var shareText: String {
-        "Check out @\(author.username)'s take on \(place.name) on chiu·ing — \(post.caption)"
+        "@\(author.username) on \(place.name) — \(post.caption)"
     }
 
-    private func actionButton(icon: String, value: Int?, tint: Color, action: @escaping () -> Void) -> some View {
+    private func actionButton(icon: String, value: Int?, highlighted: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 4) {
-                ZStack {
-                    Circle()
-                        .fill(.black.opacity(0.3))
-                        .frame(width: 48, height: 48)
-                    Image(systemName: icon)
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(tint)
-                }
+                iconCircle(icon, highlighted: highlighted)
                 if let value {
                     Text(format(value))
-                        .font(Theme.Typography.caption)
+                        .font(Theme.Typography.micro)
                         .foregroundColor(.white)
                 }
             }
+        }
+    }
+
+    private func iconCircle(_ icon: String, highlighted: Bool) -> some View {
+        ZStack {
+            Circle()
+                .fill(.black.opacity(0.32))
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Circle().stroke(Color.white.opacity(0.22), lineWidth: 1)
+                )
+            Image(systemName: icon)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(highlighted ? Theme.Palette.accent : .white)
         }
     }
 
@@ -372,25 +377,29 @@ struct ScrollPostCard: View {
                 Spacer()
             } else if dragOffset.width > 20 {
                 Spacer()
-                hint(text: "Creator", systemImage: "person.fill", align: .trailing)
+                hint(text: "Creator", systemImage: "person", align: .trailing)
             }
         }
         .animation(.easeOut(duration: 0.15), value: dragOffset)
-        .padding(.horizontal, 24)
+        .padding(.horizontal, Theme.Space.xl)
         .allowsHitTesting(false)
     }
 
     private func hint(text: String, systemImage: String, align: HorizontalAlignment) -> some View {
         VStack(alignment: align, spacing: 6) {
             Image(systemName: systemImage)
-                .font(.system(size: 28, weight: .bold))
+                .font(.system(size: 22, weight: .medium))
             Text(text)
-                .font(Theme.Typography.caption)
+                .font(Theme.Typography.label)
         }
         .foregroundColor(.white)
-        .padding(14)
-        .background(.black.opacity(0.35))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(Theme.Space.s)
+        .background(.black.opacity(0.4))
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
     }
 }
 
@@ -403,32 +412,30 @@ struct EmptyFollowingFeed: View {
     var onSwitch: () -> Void
 
     var body: some View {
-        VStack(spacing: 14) {
-            Text("🌱").font(.system(size: 72))
-            Text("Your following feed is empty")
+        VStack(spacing: Theme.Space.s) {
+            Image(systemName: "person.2")
+                .font(.system(size: 30, weight: .regular))
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.bottom, Theme.Space.xs)
+            Text("Nothing here yet")
                 .font(Theme.Typography.title)
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-            Text("Follow a few foodies to curate this view.")
+            Text("Your following feed fills up once you follow a few people.")
                 .font(Theme.Typography.body)
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
-            Button {
-                onSwitch()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
-                    Text("Switch to Discover")
-                }
-                .font(Theme.Typography.headline)
-                .foregroundColor(Theme.Palette.sunsetOrange)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Color.white)
-                .clipShape(Capsule())
+                .padding(.horizontal, Theme.Space.xl)
+            Button { onSwitch() } label: {
+                Text("Browse Discover")
+                    .font(Theme.Typography.label)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, Theme.Space.l)
+                    .padding(.vertical, 12)
+                    .background(Color.white)
+                    .clipShape(Capsule())
             }
-            .padding(.top, 4)
+            .padding(.top, Theme.Space.xs)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
@@ -443,18 +450,17 @@ struct HeartBurstView: View {
 
     var body: some View {
         Image(systemName: "heart.fill")
-            .font(.system(size: 140, weight: .black))
-            .foregroundStyle(Theme.Palette.gradientWarm)
-            .shadow(color: .black.opacity(0.3), radius: 12, y: 4)
-            .rotationEffect(.degrees(burst.rotation))
-            .scaleEffect(0.2 + phase * 1.1)
+            .font(.system(size: 120, weight: .medium))
+            .foregroundColor(.white)
+            .shadow(color: .black.opacity(0.3), radius: 8, y: 3)
+            .scaleEffect(0.3 + phase * 0.9)
             .opacity(1 - phase)
             .position(burst.position)
             .onAppear {
-                withAnimation(.easeOut(duration: 0.9)) {
+                withAnimation(.easeOut(duration: 0.7)) {
                     phase = 1
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) {
                     onComplete(burst.id)
                 }
             }
@@ -493,22 +499,24 @@ struct EmptyTagView: View {
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
-            VStack(spacing: 14) {
-                Text("🍽️").font(.system(size: 64))
-                Text("No posts tagged #\(tag)")
+            VStack(spacing: Theme.Space.s) {
+                Image(systemName: "fork.knife")
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
+                Text("Nothing tagged #\(tag) yet")
                     .font(Theme.Typography.title)
                     .foregroundColor(.white)
                 Text("Be the first to share one.")
                     .font(Theme.Typography.body)
                     .foregroundColor(.white.opacity(0.7))
                 Button("Close") { dismiss() }
-                    .font(Theme.Typography.headline)
-                    .foregroundColor(Theme.Palette.sunsetOrange)
-                    .padding(.horizontal, 24)
+                    .font(Theme.Typography.label)
+                    .foregroundColor(.black)
+                    .padding(.horizontal, Theme.Space.l)
                     .padding(.vertical, 12)
                     .background(Color.white)
                     .clipShape(Capsule())
-                    .padding(.top, 10)
+                    .padding(.top, Theme.Space.s)
             }
         }
     }

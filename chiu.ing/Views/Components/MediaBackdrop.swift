@@ -26,7 +26,9 @@ struct MediaBackdrop: View {
                     .resizable()
                     .scaledToFill()
             } else {
-                Text("🍽️").font(.system(size: 80))
+                Image(systemName: "photo")
+                    .font(.system(size: 36, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
             }
         case .userVideo(let url, _):
             VideoPreviewPlayer(url: url)

@@ -38,36 +38,38 @@ struct SettingsView: View {
                         TextField("City", text: $city)
                             .multilineTextAlignment(.trailing)
                     }
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: Theme.Space.xs) {
                         Text("Bio").foregroundColor(.secondary)
-                        TextField("A vibe, a craving, a signature dish", text: $bio, axis: .vertical)
+                        TextField("What you tell people to order.", text: $bio, axis: .vertical)
                             .lineLimit(2...4)
                     }
                 }
 
                 Section("Cravings") {
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: 8)], alignment: .leading, spacing: 8) {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 96), spacing: Theme.Space.xs)], alignment: .leading, spacing: Theme.Space.xs) {
                         ForEach(tasteOptions, id: \.self) { t in
                             Button {
                                 if editingTastes.contains(t) { editingTastes.remove(t) }
                                 else { editingTastes.insert(t) }
                             } label: {
                                 Text(t)
-                                    .font(Theme.Typography.caption)
-                                    .padding(.horizontal, 12)
+                                    .font(Theme.Typography.label)
+                                    .padding(.horizontal, Theme.Space.s)
                                     .padding(.vertical, 8)
-                                    .background(
-                                        editingTastes.contains(t)
-                                        ? AnyView(Theme.Palette.gradientWarm)
-                                        : AnyView(Theme.Palette.charcoal.opacity(0.08))
+                                    .foregroundColor(editingTastes.contains(t) ? .white : Theme.Palette.ink)
+                                    .background(editingTastes.contains(t) ? Theme.Palette.ink : Color.clear)
+                                    .overlay(
+                                        Capsule().stroke(
+                                            editingTastes.contains(t) ? Theme.Palette.ink : Theme.Palette.borderStrong,
+                                            lineWidth: 1
+                                        )
                                     )
-                                    .foregroundColor(editingTastes.contains(t) ? .white : Theme.Palette.charcoal)
                                     .clipShape(Capsule())
                             }
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, Theme.Space.xxs)
                 }
 
                 Section("Location filter") {

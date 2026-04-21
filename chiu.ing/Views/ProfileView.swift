@@ -15,9 +15,9 @@ struct ProfileView: View {
         var id: String { rawValue }
         var icon: String {
             switch self {
-            case .posts: return "square.grid.2x2.fill"
-            case .liked: return "heart.fill"
-            case .saved: return "bookmark.fill"
+            case .posts: return "square.grid.2x2"
+            case .liked: return "heart"
+            case .saved: return "bookmark"
             }
         }
     }
@@ -27,8 +27,8 @@ struct ProfileView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                heroBanner
+            VStack(alignment: .leading, spacing: Theme.Space.xl) {
+                identityBlock
                 statsStrip
                 bioAndBadges
                 mutualConnections
@@ -37,23 +37,24 @@ struct ProfileView: View {
                 content
                 Color.clear.frame(height: 120)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Theme.Space.gutter)
+            .padding(.top, Theme.Space.xl)
         }
-        .background(Theme.Palette.cream.ignoresSafeArea())
+        .background(Theme.Palette.surface.ignoresSafeArea())
         .overlay(alignment: .topTrailing) {
             if isCurrentUser {
                 Button {
                     showingSettings = true
                 } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 16, weight: .bold))
-                        .padding(10)
-                        .background(Color.white)
+                    Image(systemName: "gearshape")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(Theme.Palette.ink)
+                        .frame(width: 36, height: 36)
+                        .background(Theme.Palette.surfaceElevated)
+                        .overlay(Circle().stroke(Theme.Palette.border, lineWidth: 1))
                         .clipShape(Circle())
-                        .foregroundColor(Theme.Palette.charcoal)
-                        .shadow(color: .black.opacity(0.1), radius: 6, x: 0, y: 2)
                 }
-                .padding(16)
+                .padding(Theme.Space.m)
             }
         }
         .sheet(isPresented: $showingSettings) {
@@ -79,39 +80,58 @@ struct ProfileView: View {
         }
     }
 
-    private var heroBanner: some View {
-        ZStack(alignment: .bottom) {
-            Rectangle()
-                .fill(Theme.Palette.gradientPlayful)
-                .frame(height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-            AvatarView(user: displayUser, size: 96, showsRing: true)
-                .offset(y: 40)
+    // MARK: - Identity
+
+    private var identityBlock: some View {
+        HStack(alignment: .center, spacing: Theme.Space.m) {
+            AvatarView(user: displayUser, size: 72, showsRing: false)
+                .overlay(
+                    Circle().stroke(Theme.Palette.border, lineWidth: 1)
+                )
+            VStack(alignment: .leading, spacing: 2) {
+                Text(displayUser.displayName)
+                    .font(Theme.Typography.title)
+                    .foregroundColor(Theme.Palette.ink)
+                Text("@\(displayUser.username)")
+                    .font(Theme.Typography.body)
+                    .foregroundColor(Theme.Palette.inkSecondary)
+                Text(displayUser.city)
+                    .font(Theme.Typography.caption)
+                    .foregroundColor(Theme.Palette.inkTertiary)
+                    .padding(.top, 2)
+            }
+            Spacer()
         }
-        .padding(.bottom, 44)
-        .padding(.top, 8)
     }
 
     private var statsStrip: some View {
         HStack(spacing: 0) {
             stat(displayUser.postsCount, "Posts")
-            Divider().frame(height: 30)
+            divider
             stat(displayUser.followersCount, "Followers")
-            Divider().frame(height: 30)
+            divider
             stat(displayUser.followingCount, "Following")
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, Theme.Space.m)
         .chiuCard()
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Theme.Palette.border)
+            .frame(width: 1, height: 28)
     }
 
     private func stat(_ n: Int, _ label: String) -> some View {
         VStack(spacing: 2) {
             Text(formatted(n))
-                .font(Theme.Typography.headline)
-                .foregroundColor(Theme.Palette.charcoal)
+                .font(.system(size: 17, weight: .semibold, design: .serif))
+                .foregroundColor(Theme.Palette.ink)
             Text(label)
-                .font(Theme.Typography.caption)
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                .font(Theme.Typography.micro)
+                .tracking(Theme.Typography.eyebrowTracking)
+                .textCase(.uppercase)
+                .foregroundColor(Theme.Palette.inkTertiary)
         }
         .frame(maxWidth: .infinity)
     }
@@ -122,34 +142,35 @@ struct ProfileView: View {
     }
 
     private var bioAndBadges: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(displayUser.displayName)
-                .font(Theme.Typography.title)
-            Text("@\(displayUser.username) • \(displayUser.city)")
-                .font(Theme.Typography.caption)
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
             if !displayUser.bio.isEmpty {
                 Text(displayUser.bio)
                     .font(Theme.Typography.body)
-                    .foregroundColor(Theme.Palette.charcoal)
+                    .foregroundColor(Theme.Palette.ink)
             }
             if !displayUser.badges.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
+                    HStack(spacing: Theme.Space.xs) {
                         ForEach(displayUser.badges, id: \.self) { b in
-                            Text("⭐️ \(b)")
-                                .font(Theme.Typography.tag)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 6)
-                                .background(Theme.Palette.gradientPlayful)
-                                .foregroundColor(.white)
-                                .clipShape(Capsule())
+                            HStack(spacing: 4) {
+                                Image(systemName: "checkmark.seal")
+                                    .font(.system(size: 10))
+                                Text(b)
+                            }
+                            .font(Theme.Typography.micro)
+                            .padding(.horizontal, Theme.Space.s)
+                            .padding(.vertical, 6)
+                            .foregroundColor(Theme.Palette.ink)
+                            .background(Theme.Palette.surfaceElevated)
+                            .overlay(
+                                Capsule().stroke(Theme.Palette.border, lineWidth: 1)
+                            )
+                            .clipShape(Capsule())
                         }
                     }
                 }
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -161,19 +182,18 @@ struct ProfileView: View {
                 session.followedUserIDs.contains($0.id)
             }
             if !mutuals.isEmpty {
-                HStack(spacing: 10) {
-                    HStack(spacing: -10) {
+                HStack(spacing: Theme.Space.s) {
+                    HStack(spacing: -8) {
                         ForEach(mutuals.prefix(3)) { m in
-                            AvatarView(user: m, size: 28, showsRing: false)
-                                .overlay(Circle().stroke(Theme.Palette.cream, lineWidth: 2))
+                            AvatarView(user: m, size: 24, showsRing: false)
+                                .overlay(Circle().stroke(Theme.Palette.surface, lineWidth: 2))
                         }
                     }
                     Text(mutualText(count: mutuals.count, first: mutuals.first))
                         .font(Theme.Typography.caption)
-                        .foregroundColor(Theme.Palette.charcoal.opacity(0.7))
+                        .foregroundColor(Theme.Palette.inkSecondary)
                     Spacer()
                 }
-                .padding(.vertical, 4)
             }
         }
     }
@@ -186,74 +206,56 @@ struct ProfileView: View {
     }
 
     private var actionButtons: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: Theme.Space.s) {
             if isCurrentUser {
-                capsuleButton("Edit profile", filled: false) { showingSettings = true }
-                ShareLink(item: "Follow me on chiu·ing — @\(displayUser.username)") {
-                    Text("Share")
-                        .font(Theme.Typography.headline)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
-                        .foregroundColor(.white)
-                        .background(Theme.Palette.gradientWarm)
-                        .clipShape(Capsule())
+                Button("Edit profile") { showingSettings = true }
+                    .buttonStyle(SecondaryButtonStyle())
+                ShareLink(item: "Find me on chiu·ing — @\(displayUser.username)") {
+                    Text("Share profile")
                 }
+                .buttonStyle(PrimaryButtonStyle())
             } else {
                 let following = session.followedUserIDs.contains(displayUser.id)
-                capsuleButton(following ? "Following" : "Follow", filled: !following) {
+                Button(following ? "Following" : "Follow") {
                     session.toggleFollow(displayUser)
                 }
-                capsuleButton("Message", filled: false) {}
+                .buttonStyle(following ? AnyButtonStyle(SecondaryButtonStyle()) : AnyButtonStyle(PrimaryButtonStyle()))
+                Button("Message") {}
+                    .buttonStyle(SecondaryButtonStyle())
             }
-        }
-    }
-
-    @ViewBuilder
-    private func capsuleButton(_ title: String, filled: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(title)
-                .font(Theme.Typography.headline)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity)
-                .foregroundColor(filled ? .white : Theme.Palette.charcoal)
-                .background(
-                    filled
-                    ? AnyView(Theme.Palette.gradientWarm)
-                    : AnyView(Color.white)
-                )
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().stroke(Theme.Palette.charcoal.opacity(0.08), lineWidth: 1)
-                )
         }
     }
 
     private var sectionTabs: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 0) {
             ForEach(Section.allCases) { section in
                 Button {
-                    withAnimation(.spring(response: 0.3)) { selectedSection = section }
+                    withAnimation(.easeInOut(duration: 0.18)) { selectedSection = section }
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: section.icon)
-                        Text(section.rawValue)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 6) {
+                            Image(systemName: section.icon)
+                                .font(.system(size: 13, weight: .regular))
+                            Text(section.rawValue)
+                                .font(Theme.Typography.label)
+                        }
+                        .foregroundColor(selectedSection == section ? Theme.Palette.ink : Theme.Palette.inkTertiary)
+                        Rectangle()
+                            .fill(selectedSection == section ? Theme.Palette.ink : Color.clear)
+                            .frame(height: 1.5)
                     }
-                    .font(Theme.Typography.caption)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(
-                        selectedSection == section
-                        ? AnyView(Theme.Palette.gradientWarm)
-                        : AnyView(Color.white)
-                    )
-                    .foregroundColor(selectedSection == section ? .white : Theme.Palette.charcoal)
-                    .clipShape(Capsule())
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
-            Spacer()
         }
+        .overlay(
+            Rectangle()
+                .fill(Theme.Palette.border)
+                .frame(height: 1),
+            alignment: .bottom
+        )
     }
 
     private var visiblePosts: [Post] {
@@ -267,20 +269,28 @@ struct ProfileView: View {
     @ViewBuilder
     private var content: some View {
         if visiblePosts.isEmpty {
-            VStack(spacing: 8) {
-                Text(emptyEmoji)
-                    .font(.system(size: 54))
+            VStack(spacing: Theme.Space.xs) {
+                Image(systemName: emptyIcon)
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundColor(Theme.Palette.inkTertiary)
+                    .padding(.bottom, Theme.Space.xs)
+                Text(emptyTitle)
+                    .font(Theme.Typography.headline)
+                    .foregroundColor(Theme.Palette.ink)
                 Text(emptyMessage)
                     .font(Theme.Typography.body)
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                    .foregroundColor(Theme.Palette.inkSecondary)
                     .multilineTextAlignment(.center)
             }
-            .padding(.vertical, 40)
+            .padding(.vertical, Theme.Space.xxxl)
             .frame(maxWidth: .infinity)
         } else {
             LazyVGrid(
-                columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)],
-                spacing: 8
+                columns: [
+                    GridItem(.flexible(), spacing: Theme.Space.xs),
+                    GridItem(.flexible(), spacing: Theme.Space.xs)
+                ],
+                spacing: Theme.Space.xs
             ) {
                 ForEach(visiblePosts) { post in
                     Button { openingPost = post } label: {
@@ -292,14 +302,23 @@ struct ProfileView: View {
         }
     }
 
-    private var emptyEmoji: String {
+    private var emptyIcon: String {
         switch selectedSection {
-        case .posts: return "📸"; case .liked: return "💗"; case .saved: return "🔖"
+        case .posts: return "camera"
+        case .liked: return "heart"
+        case .saved: return "bookmark"
+        }
+    }
+    private var emptyTitle: String {
+        switch selectedSection {
+        case .posts: return "No posts yet"
+        case .liked: return "Nothing liked yet"
+        case .saved: return "Nothing saved yet"
         }
     }
     private var emptyMessage: String {
         switch selectedSection {
-        case .posts: return "No posts yet — go chew something worth sharing."
+        case .posts: return "Share a meal worth remembering."
         case .liked: return "Posts you love will live here."
         case .saved: return "Save places to find them later."
         }
@@ -312,15 +331,42 @@ struct ProfileGridTile: View {
         ZStack(alignment: .bottomLeading) {
             MediaBackdrop(media: post.media)
                 .aspectRatio(3 / 4, contentMode: .fill)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                        .stroke(Theme.Palette.border, lineWidth: 1)
+                )
             HStack(spacing: 4) {
                 Image(systemName: "heart.fill")
-                    .foregroundColor(Theme.Palette.bubblegumPink)
-                Text("\(post.likeCount)")
+                    .font(.system(size: 10))
+                Text(formatted(post.likeCount))
             }
-            .font(Theme.Typography.caption)
+            .font(Theme.Typography.micro)
             .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(.black.opacity(0.45))
+            .clipShape(Capsule())
             .padding(8)
         }
+    }
+
+    private func formatted(_ n: Int) -> String {
+        if n >= 1000 { return String(format: "%.1fk", Double(n) / 1000.0) }
+        return "\(n)"
+    }
+}
+
+// MARK: - Type-erased button style helper
+
+struct AnyButtonStyle: ButtonStyle {
+    private let _makeBody: (Configuration) -> AnyView
+
+    init<S: ButtonStyle>(_ style: S) {
+        _makeBody = { config in AnyView(style.makeBody(configuration: config)) }
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        _makeBody(configuration)
     }
 }

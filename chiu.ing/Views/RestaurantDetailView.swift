@@ -26,31 +26,33 @@ struct RestaurantDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: Theme.Space.xl) {
                 hero
                 headingBlock
                 actionRow
-                tagsRow
+                if !restaurant.tags.isEmpty { tagsRow }
                 mapSection
-                friendsSection
+                if !friendsWhoVisited.isEmpty { friendsSection }
                 reviewsSection
-                Color.clear.frame(height: 60)
+                Color.clear.frame(height: Theme.Space.xxl)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, Theme.Space.gutter)
+            .padding(.top, Theme.Space.xl)
         }
-        .background(Theme.Palette.cream.ignoresSafeArea())
+        .background(Theme.Palette.surface.ignoresSafeArea())
         .overlay(alignment: .topTrailing) {
             Button {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(10)
-                    .background(.black.opacity(0.4))
+                    .frame(width: 36, height: 36)
+                    .background(.black.opacity(0.45))
+                    .overlay(Circle().stroke(Color.white.opacity(0.2), lineWidth: 1))
                     .clipShape(Circle())
             }
-            .padding(14)
+            .padding(Theme.Space.m)
         }
         .fullScreenCover(item: $openingTag) { tag in
             TagFeedContainer(tag: tag.value)
@@ -61,77 +63,85 @@ struct RestaurantDetailView: View {
 
     private var hero: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Theme.Palette.gradientWarm)
+            RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
+                .fill(Theme.Palette.surfaceSunk)
                 .frame(height: 200)
+                .overlay(
+                    RoundedRectangle(cornerRadius: Theme.Radius.large, style: .continuous)
+                        .stroke(Theme.Palette.border, lineWidth: 1)
+                )
             Text(restaurant.heroEmoji)
-                .font(.system(size: 120))
+                .font(.system(size: 110))
+                .shadow(color: .black.opacity(0.08), radius: 8, y: 4)
         }
     }
 
     private var headingBlock: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
+            Text(restaurant.cuisine.uppercased())
+                .eyebrowStyle()
             Text(restaurant.name)
                 .font(Theme.Typography.display)
-            HStack(spacing: 8) {
-                Text(restaurant.cuisine)
-                Text("•")
+                .foregroundColor(Theme.Palette.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 6) {
                 Text(restaurant.neighborhood)
-                Text("•")
+                Text("·")
                 Text(restaurant.priceLabel)
+                Text("·")
+                HStack(spacing: 3) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.Palette.gold)
+                    Text(String(format: "%.1f", restaurant.rating))
+                        .foregroundColor(Theme.Palette.ink)
+                        .fontWeight(.medium)
+                }
+                Text("·")
+                Text("\(postStore.posts(atRestaurant: restaurant.id).count) posts")
             }
             .font(Theme.Typography.caption)
-            .foregroundColor(Theme.Palette.charcoal.opacity(0.65))
-            HStack(spacing: 4) {
-                Image(systemName: "star.fill")
-                    .foregroundColor(Theme.Palette.mangoYellow)
-                Text(String(format: "%.1f", restaurant.rating))
-                    .fontWeight(.bold)
-                Text("• \(postStore.posts(atRestaurant: restaurant.id).count) posts")
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
-            }
-            .font(Theme.Typography.body)
+            .foregroundColor(Theme.Palette.inkSecondary)
         }
     }
 
     private var actionRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: Theme.Space.xs) {
             actionChip(
-                label: session.visitedRestaurantIDs.contains(restaurant.id) ? "Been here ✓" : "Been here",
-                icon: "checkmark.seal.fill",
+                label: session.visitedRestaurantIDs.contains(restaurant.id) ? "Been here" : "Mark visited",
+                icon: session.visitedRestaurantIDs.contains(restaurant.id) ? "checkmark.circle.fill" : "checkmark.circle",
                 filled: session.visitedRestaurantIDs.contains(restaurant.id)
             ) {
                 session.toggleVisit(restaurant)
+                Haptics.soft()
             }
-            actionChip(label: "Directions", icon: "arrow.triangle.turn.up.right.circle.fill", filled: false) {}
-            actionChip(label: "Share", icon: "paperplane.fill", filled: false) {}
+            actionChip(label: "Directions", icon: "arrow.triangle.turn.up.right.circle", filled: false) {}
+            actionChip(label: "Share", icon: "paperplane", filled: false) {}
         }
     }
 
     private func actionChip(label: String, icon: String, filled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                Image(systemName: icon)
+                Image(systemName: icon).font(.system(size: 13))
                 Text(label)
             }
-            .font(Theme.Typography.caption)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            .font(Theme.Typography.label)
+            .padding(.vertical, Theme.Space.s)
             .frame(maxWidth: .infinity)
-            .background(
-                filled
-                ? AnyView(Theme.Palette.gradientWarm)
-                : AnyView(Color.white)
+            .foregroundColor(filled ? .white : Theme.Palette.ink)
+            .background(filled ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                    .stroke(filled ? Theme.Palette.ink : Theme.Palette.border, lineWidth: 1)
             )
-            .foregroundColor(filled ? .white : Theme.Palette.charcoal)
-            .clipShape(Capsule())
-            .overlay(Capsule().stroke(Theme.Palette.charcoal.opacity(0.08), lineWidth: 1))
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
         }
     }
 
     private var tagsRow: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
+            HStack(spacing: Theme.Space.xs) {
                 ForEach(restaurant.tags, id: \.self) { t in
                     TagPill(text: t, onTap: { openingTag = IdentifiedTag(value: t) })
                 }
@@ -140,36 +150,35 @@ struct RestaurantDetailView: View {
     }
 
     private var mapSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Where to find it")
-                .font(Theme.Typography.headline)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text("Location").eyebrowStyle()
             Map(position: $position) {
                 Marker(restaurant.name, coordinate: restaurant.coordinate)
-                    .tint(Theme.Palette.sunsetOrange)
+                    .tint(Theme.Palette.accent)
             }
-            .frame(height: 160)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .frame(height: 180)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                    .stroke(Theme.Palette.border, lineWidth: 1)
+            )
         }
     }
 
-    @ViewBuilder
     private var friendsSection: some View {
-        if !friendsWhoVisited.isEmpty {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Friends who've been")
-                    .font(Theme.Typography.headline)
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
-                        ForEach(friendsWhoVisited) { f in
-                            VStack(spacing: 6) {
-                                AvatarView(user: f, size: 48, showsRing: true)
-                                Text("@\(f.username)")
-                                    .font(Theme.Typography.caption)
-                                    .foregroundColor(Theme.Palette.charcoal.opacity(0.7))
-                                    .lineLimit(1)
-                            }
-                            .frame(width: 70)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text("Who's been here").eyebrowStyle()
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Theme.Space.m) {
+                    ForEach(friendsWhoVisited) { f in
+                        VStack(spacing: 6) {
+                            AvatarView(user: f, size: 44, showsRing: false)
+                            Text("@\(f.username)")
+                                .font(Theme.Typography.caption)
+                                .foregroundColor(Theme.Palette.inkSecondary)
+                                .lineLimit(1)
                         }
+                        .frame(width: 64)
                     }
                 }
             }
@@ -177,24 +186,26 @@ struct RestaurantDetailView: View {
     }
 
     private var reviewsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Quick reviews")
-                .font(Theme.Typography.headline)
-            ForEach(postStore.posts(atRestaurant: restaurant.id)) { post in
-                if let author = MockData.user(id: post.authorID) {
-                    HStack(alignment: .top, spacing: 10) {
-                        AvatarView(user: author, size: 32)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("@\(author.username)")
-                                .font(Theme.Typography.caption)
-                                .foregroundColor(Theme.Palette.charcoal.opacity(0.7))
-                            Text(post.caption)
-                                .font(Theme.Typography.body)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text("Notes from the feed").eyebrowStyle()
+            VStack(spacing: Theme.Space.s) {
+                ForEach(postStore.posts(atRestaurant: restaurant.id)) { post in
+                    if let author = MockData.user(id: post.authorID) {
+                        HStack(alignment: .top, spacing: Theme.Space.s) {
+                            AvatarView(user: author, size: 32)
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("@\(author.username)")
+                                    .font(Theme.Typography.label)
+                                    .foregroundColor(Theme.Palette.inkSecondary)
+                                Text(post.caption)
+                                    .font(Theme.Typography.body)
+                                    .foregroundColor(Theme.Palette.ink)
+                            }
+                            Spacer()
                         }
-                        Spacer()
+                        .padding(Theme.Space.m)
+                        .chiuCard()
                     }
-                    .padding(12)
-                    .chiuCard()
                 }
             }
         }

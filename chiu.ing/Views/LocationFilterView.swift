@@ -22,19 +22,19 @@ struct LocationFilterView: View {
             handle
             header
             ScrollView {
-                VStack(alignment: .leading, spacing: 18) {
+                VStack(alignment: .leading, spacing: Theme.Space.l) {
                     mapCard
                     currentLocationToggle
                     citySearch
                     radiusSlider
                     popularStrip
-                    Spacer(minLength: 40)
+                    Spacer(minLength: Theme.Space.xxl)
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, Theme.Space.gutter)
             }
             applyBar
         }
-        .background(Theme.Palette.cream.ignoresSafeArea())
+        .background(Theme.Palette.surface.ignoresSafeArea())
         .onAppear {
             city = session.locationFilter.city
             radiusMiles = session.locationFilter.radiusMiles
@@ -44,98 +44,116 @@ struct LocationFilterView: View {
 
     private var handle: some View {
         Capsule()
-            .fill(Theme.Palette.charcoal.opacity(0.2))
-            .frame(width: 42, height: 5)
-            .padding(.vertical, 10)
+            .fill(Theme.Palette.borderStrong)
+            .frame(width: 36, height: 4)
+            .padding(.vertical, Theme.Space.s)
     }
 
     private var header: some View {
         HStack {
-            Text("Where to chiu")
-                .font(Theme.Typography.title)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Location").eyebrowStyle()
+                Text("Where to chiu")
+                    .font(Theme.Typography.title)
+                    .foregroundColor(Theme.Palette.ink)
+            }
             Spacer()
             Button("Close") { dismiss() }
-                .font(Theme.Typography.caption)
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.6))
+                .font(Theme.Typography.label)
+                .foregroundColor(Theme.Palette.inkSecondary)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+        .padding(.horizontal, Theme.Space.gutter)
+        .padding(.bottom, Theme.Space.m)
     }
 
     private var mapCard: some View {
         Map(position: $position)
-            .frame(height: 180)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .frame(height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                    .stroke(Theme.Palette.border, lineWidth: 1)
+            )
             .overlay(
                 Circle()
-                    .strokeBorder(Theme.Palette.sunsetOrange, lineWidth: 2)
-                    .frame(width: max(CGFloat(radiusMiles) * 14, 40),
-                           height: max(CGFloat(radiusMiles) * 14, 40))
+                    .strokeBorder(Theme.Palette.accent, lineWidth: 2)
+                    .frame(
+                        width: max(CGFloat(radiusMiles) * 14, 44),
+                        height: max(CGFloat(radiusMiles) * 14, 44)
+                    )
                     .allowsHitTesting(false)
             )
     }
 
     private var currentLocationToggle: some View {
         Toggle(isOn: $useCurrent) {
-            HStack(spacing: 8) {
-                Image(systemName: "location.circle.fill")
-                    .foregroundColor(Theme.Palette.skyBlue)
+            HStack(spacing: Theme.Space.xs) {
+                Image(systemName: "location")
+                    .foregroundColor(Theme.Palette.ink)
                 Text("Use current location")
+                    .font(Theme.Typography.body)
+                    .foregroundColor(Theme.Palette.ink)
             }
-            .font(Theme.Typography.body)
         }
-        .tint(Theme.Palette.sunsetOrange)
-        .padding(14)
+        .tint(Theme.Palette.ink)
+        .padding(Theme.Space.m)
         .chiuCard()
     }
 
     private var citySearch: some View {
-        HStack {
+        HStack(spacing: Theme.Space.s) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(Theme.Palette.charcoal.opacity(0.5))
+                .font(.system(size: 14))
+                .foregroundColor(Theme.Palette.inkTertiary)
             TextField("Search city or area", text: $city)
                 .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.ink)
         }
-        .padding(14)
-        .chiuCard()
+        .padding(.horizontal, Theme.Space.m)
+        .padding(.vertical, 12)
+        .background(Theme.Palette.surfaceElevated)
+        .overlay(
+            RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous)
+                .stroke(Theme.Palette.border, lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.medium, style: .continuous))
     }
 
     private var radiusSlider: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Theme.Space.xs) {
             HStack {
-                Text("Radius")
-                    .font(Theme.Typography.headline)
+                Text("Search radius").eyebrowStyle()
                 Spacer()
                 Text("\(Int(radiusMiles)) mi")
-                    .font(Theme.Typography.caption)
-                    .foregroundColor(Theme.Palette.sunsetOrange)
-                    .fontWeight(.bold)
+                    .font(Theme.Typography.label)
+                    .foregroundColor(Theme.Palette.ink)
             }
             Slider(value: $radiusMiles, in: 1...50, step: 1)
-                .tint(Theme.Palette.sunsetOrange)
+                .tint(Theme.Palette.ink)
         }
-        .padding(14)
+        .padding(Theme.Space.m)
         .chiuCard()
     }
 
     private var popularStrip: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Popular cities")
-                .font(Theme.Typography.headline)
+        VStack(alignment: .leading, spacing: Theme.Space.s) {
+            Text("Popular cities").eyebrowStyle()
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: Theme.Space.xs) {
                     ForEach(popularCities, id: \.self) { c in
-                        Button {
-                            city = c
-                        } label: {
+                        Button { city = c } label: {
                             Text(c)
-                                .font(Theme.Typography.caption)
-                                .padding(.horizontal, 14)
+                                .font(Theme.Typography.label)
+                                .padding(.horizontal, Theme.Space.m)
                                 .padding(.vertical, 8)
-                                .background(city == c
-                                            ? AnyView(Theme.Palette.gradientWarm)
-                                            : AnyView(Color.white))
-                                .foregroundColor(city == c ? .white : Theme.Palette.charcoal)
+                                .foregroundColor(city == c ? .white : Theme.Palette.ink)
+                                .background(city == c ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+                                .overlay(
+                                    Capsule().stroke(
+                                        city == c ? Theme.Palette.ink : Theme.Palette.border,
+                                        lineWidth: 1
+                                    )
+                                )
                                 .clipShape(Capsule())
                         }
                     }
@@ -145,22 +163,23 @@ struct LocationFilterView: View {
     }
 
     private var applyBar: some View {
-        Button {
-            session.locationFilter = LocationFilter(
-                city: city.isEmpty ? session.locationFilter.city : city,
-                radiusMiles: radiusMiles,
-                usingCurrentLocation: useCurrent
-            )
-            dismiss()
-        } label: {
-            Text("Apply filter")
-                .font(Theme.Typography.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Theme.Palette.gradientWarm)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .padding(16)
+        VStack(spacing: 0) {
+            Rectangle()
+                .fill(Theme.Palette.border)
+                .frame(height: 1)
+            Button {
+                session.locationFilter = LocationFilter(
+                    city: city.isEmpty ? session.locationFilter.city : city,
+                    radiusMiles: radiusMiles,
+                    usingCurrentLocation: useCurrent
+                )
+                dismiss()
+            } label: {
+                Text("Apply filter")
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .padding(.horizontal, Theme.Space.gutter)
+            .padding(.vertical, Theme.Space.m)
         }
     }
 }

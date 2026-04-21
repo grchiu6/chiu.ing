@@ -34,7 +34,11 @@ struct NotificationsView: View {
             header
             filterBar
             ScrollView {
-                LazyVStack(spacing: 10) {
+                LazyVStack(spacing: Theme.Space.s) {
+                    if notifications.isEmpty {
+                        EmptyNotificationsView(filter: filter)
+                            .padding(.top, Theme.Space.xxl)
+                    }
                     ForEach(notifications) { n in
                         NotificationRow(
                             notification: n,
@@ -43,13 +47,13 @@ struct NotificationsView: View {
                             onOpenPost: { openingPost = $0 }
                         )
                     }
-                    Color.clear.frame(height: 40)
+                    Color.clear.frame(height: Theme.Space.xxl)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.horizontal, Theme.Space.gutter)
+                .padding(.top, Theme.Space.s)
             }
         }
-        .background(Theme.Palette.cream.ignoresSafeArea())
+        .background(Theme.Palette.surface.ignoresSafeArea())
         .sheet(item: $presentedUser) { ProfileView(user: $0).environmentObject(session) }
         .sheet(item: $presentedRestaurant) { RestaurantDetailView(restaurant: $0).environmentObject(session) }
         .fullScreenCover(item: $openingPost) { post in
@@ -65,48 +69,84 @@ struct NotificationsView: View {
 
     private var header: some View {
         HStack {
-            Text("Activity")
-                .font(Theme.Typography.title)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Activity").eyebrowStyle()
+                Text("What your circle is up to")
+                    .font(Theme.Typography.title)
+                    .foregroundColor(Theme.Palette.ink)
+            }
             Spacer()
             Button {
                 dismiss()
             } label: {
                 Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .bold))
-                    .padding(10)
-                    .background(Color.white)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(Theme.Palette.ink)
+                    .frame(width: 32, height: 32)
+                    .background(Theme.Palette.surfaceElevated)
+                    .overlay(Circle().stroke(Theme.Palette.border, lineWidth: 1))
                     .clipShape(Circle())
-                    .foregroundColor(Theme.Palette.charcoal)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 18)
-        .padding(.bottom, 10)
+        .padding(.horizontal, Theme.Space.gutter)
+        .padding(.top, Theme.Space.xl)
+        .padding(.bottom, Theme.Space.s)
     }
 
     private var filterBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Theme.Space.xs) {
             ForEach(Filter.allCases) { f in
                 Button {
-                    withAnimation(.spring(response: 0.3)) { filter = f }
+                    withAnimation(.easeInOut(duration: 0.18)) { filter = f }
                 } label: {
                     Text(f.rawValue)
-                        .font(Theme.Typography.caption)
-                        .padding(.horizontal, 14)
+                        .font(Theme.Typography.label)
+                        .padding(.horizontal, Theme.Space.m)
                         .padding(.vertical, 8)
-                        .background(
-                            filter == f
-                            ? AnyView(Theme.Palette.gradientWarm)
-                            : AnyView(Color.white)
+                        .foregroundColor(filter == f ? .white : Theme.Palette.ink)
+                        .background(filter == f ? Theme.Palette.ink : Theme.Palette.surfaceElevated)
+                        .overlay(
+                            Capsule().stroke(
+                                filter == f ? Theme.Palette.ink : Theme.Palette.border,
+                                lineWidth: 1
+                            )
                         )
-                        .foregroundColor(filter == f ? .white : Theme.Palette.charcoal)
                         .clipShape(Capsule())
                 }
             }
             Spacer()
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 10)
+        .padding(.horizontal, Theme.Space.gutter)
+        .padding(.bottom, Theme.Space.s)
+    }
+}
+
+struct EmptyNotificationsView: View {
+    let filter: NotificationsView.Filter
+    var body: some View {
+        VStack(spacing: Theme.Space.xs) {
+            Image(systemName: "bell")
+                .font(.system(size: 26, weight: .regular))
+                .foregroundColor(Theme.Palette.inkTertiary)
+                .padding(.bottom, Theme.Space.xs)
+            Text("No activity yet")
+                .font(Theme.Typography.headline)
+                .foregroundColor(Theme.Palette.ink)
+            Text(message)
+                .font(Theme.Typography.body)
+                .foregroundColor(Theme.Palette.inkSecondary)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, Theme.Space.xl)
+        .frame(maxWidth: .infinity)
+    }
+
+    private var message: String {
+        switch filter {
+        case .all: return "Likes, follows, and mentions will land here."
+        case .mentions: return "When someone @-mentions you, you'll see it here."
+        case .friends: return "Follow a few people and their activity will surface here."
+        }
     }
 }
 
@@ -119,41 +159,43 @@ struct NotificationRow: View {
     private var actor: User? { MockData.user(id: notification.actorID) }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .top, spacing: Theme.Space.s) {
             if let a = actor {
                 Button { onOpenUser(a) } label: {
-                    AvatarView(user: a, size: 44, showsRing: true)
+                    AvatarView(user: a, size: 40, showsRing: false)
                 }
                 .buttonStyle(.plain)
             }
             VStack(alignment: .leading, spacing: 4) {
                 attributedText
                     .font(Theme.Typography.body)
+                    .foregroundColor(Theme.Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
                 Text(timeString)
                     .font(Theme.Typography.caption)
-                    .foregroundColor(Theme.Palette.charcoal.opacity(0.5))
+                    .foregroundColor(Theme.Palette.inkTertiary)
                 actionArea
+                    .padding(.top, 2)
             }
             Spacer()
             if !notification.isRead {
                 Circle()
-                    .fill(Theme.Palette.sunsetOrange)
-                    .frame(width: 8, height: 8)
+                    .fill(Theme.Palette.accent)
+                    .frame(width: 7, height: 7)
                     .padding(.top, 6)
             }
         }
-        .padding(12)
+        .padding(Theme.Space.m)
         .chiuCard()
     }
 
     private var attributedText: Text {
         let name = actor?.displayName ?? "Someone"
-        let username = actor.map { "@\($0.username)" } ?? ""
-        let primary = Text(name).bold() + Text(" ") + Text(actionPhrase)
         switch notification.kind {
-        case .milestone(let text): return Text(text).bold()
-        default: return primary + Text(" · \(username)").foregroundColor(Theme.Palette.charcoal.opacity(0.55))
+        case .milestone(let text):
+            return Text(text).fontWeight(.semibold)
+        default:
+            return Text(name).fontWeight(.semibold) + Text(" \(actionPhrase)")
         }
     }
 
@@ -177,18 +219,23 @@ struct NotificationRow: View {
                 Button {
                     onOpenPost(post)
                 } label: {
-                    HStack(spacing: 8) {
+                    HStack(spacing: Theme.Space.xs) {
                         MediaBackdrop(media: post.media)
                             .frame(width: 40, height: 40)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                            .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                                    .stroke(Theme.Palette.border, lineWidth: 1)
+                            )
                         Text(post.caption)
                             .font(Theme.Typography.caption)
-                            .foregroundColor(Theme.Palette.charcoal.opacity(0.7))
+                            .foregroundColor(Theme.Palette.inkSecondary)
                             .lineLimit(2)
                     }
-                    .padding(8)
-                    .background(Theme.Palette.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(.horizontal, Theme.Space.xs)
+                    .padding(.vertical, Theme.Space.xxs)
+                    .background(Theme.Palette.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
@@ -196,11 +243,12 @@ struct NotificationRow: View {
             if let a = actor {
                 Button { onOpenUser(a) } label: {
                     Text("View profile")
-                        .font(Theme.Typography.tag)
-                        .padding(.horizontal, 12)
+                        .font(Theme.Typography.micro)
+                        .padding(.horizontal, Theme.Space.s)
                         .padding(.vertical, 6)
-                        .background(Theme.Palette.gradientWarm)
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.Palette.ink)
+                        .background(Theme.Palette.surfaceElevated)
+                        .overlay(Capsule().stroke(Theme.Palette.border, lineWidth: 1))
                         .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
@@ -208,15 +256,20 @@ struct NotificationRow: View {
         case .friendVisited(let rID):
             if let r = MockData.restaurant(id: rID) {
                 Button { onOpenRestaurant(r) } label: {
-                    HStack(spacing: 8) {
-                        Text(r.heroEmoji)
+                    HStack(spacing: 6) {
+                        Text(r.heroEmoji).font(.system(size: 14))
                         Text(r.name)
                             .font(Theme.Typography.caption)
-                            .foregroundColor(Theme.Palette.charcoal)
+                            .foregroundColor(Theme.Palette.ink)
                     }
-                    .padding(8)
-                    .background(Theme.Palette.cream)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(.horizontal, Theme.Space.xs)
+                    .padding(.vertical, Theme.Space.xxs)
+                    .background(Theme.Palette.surface)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous)
+                            .stroke(Theme.Palette.border, lineWidth: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.small, style: .continuous))
                 }
                 .buttonStyle(.plain)
             }
